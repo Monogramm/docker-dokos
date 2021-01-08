@@ -1,0 +1,93 @@
+os: linux
+dist: trusty
+
+services: docker
+
+language: shell
+
+branches:
+  only:
+    - master
+
+before_install:
+  - env | sort
+  - export home=$(pwd)
+  - export image_dir="${home}/images/${VERSION}/${VARIANT}"
+  - export DOCKER_TAG="${VERSION}-${VARIANT}-travis"
+  - export IMAGE_NAME="docker-dokos:${DOCKER_TAG}"
+  - export IMAGE_ALIAS_NAME="docker-dokos:${VERSION}"
+
+install:
+  - echo "Changing to image directory ($image_dir)"
+  - cd "$image_dir"
+  # Test container build
+  - travis_retry travis_wait 180 docker-compose -f "docker-compose.${DATABASE}.yml" build
+
+before_script:
+  - docker images
+  # Set permissions for persistence
+  - mkdir -p '/srv/dokos/dodock/sites' '/srv/dokos/dodock/logs'
+  - chown 1000:1000 '/srv/dokos/dodock/sites' '/srv/dokos/dodock/logs'
+
+script:
+  - echo "Changing to image directory ($image_dir)"
+  - cd "$image_dir"
+  # Test container run
+  - travis_retry docker-compose -f "docker-compose.${DATABASE}.yml" up -d
+  - docker-compose -f "docker-compose.${DATABASE}.yml" logs -f "sut"
+  - docker-compose -f "docker-compose.${DATABASE}.yml" ps
+  - docker-compose -f "docker-compose.${DATABASE}.yml" logs "dokos_db"
+  - docker-compose -f "docker-compose.${DATABASE}.yml" ps "dokos_db" | grep "Up"
+  - docker-compose -f "docker-compose.${DATABASE}.yml" logs "dokos_app"
+  - docker-compose -f "docker-compose.${DATABASE}.yml" ps "dokos_app" | grep "Up"
+  - docker-compose -f "docker-compose.${DATABASE}.yml" logs "dokos_web"
+  - docker-compose -f "docker-compose.${DATABASE}.yml" ps "dokos_web" | grep "Up"
+  - docker-compose -f "docker-compose.${DATABASE}.yml" ps "sut" | grep "Exit 0"
+  # Test container restart
+  - docker-compose -f "docker-compose.${DATABASE}.yml" down
+  - travis_retry docker-compose -f "docker-compose.${DATABASE}.yml" up -d
+  - docker-compose -f "docker-compose.${DATABASE}.yml" logs -f "sut"
+  - docker-compose -f "docker-compose.${DATABASE}.yml" ps
+  - docker-compose -f "docker-compose.${DATABASE}.yml" logs "dokos_db"
+  - docker-compose -f "docker-compose.${DATABASE}.yml" ps "dokos_db" | grep "Up" || exit 1
+  - docker-compose -f "docker-compose.${DATABASE}.yml" logs "dokos_app"
+  - docker-compose -f "docker-compose.${DATABASE}.yml" ps "dokos_app" | grep "Up" || exit 1
+  - docker-compose -f "docker-compose.${DATABASE}.yml" logs "dokos_web"
+  - docker-compose -f "docker-compose.${DATABASE}.yml" ps "dokos_web" | grep "Up" || exit 1
+  - docker-compose -f "docker-compose.${DATABASE}.yml" ps "sut" | grep "Exit 0"
+  # Test container migrate
+  - docker-compose -f "docker-compose.${DATABASE}.yml" run --rm "dokos_app" bench migrate --help
+  - docker-compose -f "docker-compose.${DATABASE}.yml" run --rm "dokos_app" migrate
+  # Test container backup
+  - docker-compose -f "docker-compose.${DATABASE}.yml" run --rm "dokos_app" bench backup --help
+  - docker-compose -f "docker-compose.${DATABASE}.yml" run --rm "dokos_app" backup && sleep 5
+  - docker-compose -f "docker-compose.${DATABASE}.yml" run --rm "dokos_app" backup && sleep 5
+  - docker-compose -f "docker-compose.${DATABASE}.yml" run --rm "dokos_app" backup && sleep 5
+  # Test container restore
+  - docker-compose -f "docker-compose.${DATABASE}.yml" run --rm "dokos_app" bench restore --help
+  # Test container "old" restore (file number instead of file name)
+  - docker-compose -f "docker-compose.${DATABASE}.yml" run --rm "dokos_app" restore 1
+
+notifications:
+  email: false
+
+matrix:
+  allow_failures:
+    - env: VERSION=develop VARIANT=alpine3.12 DATABASE=postgres
+    - env: VERSION=develop VARIANT=alpine3.12 DATABASE=mariadb
+    - env: VERSION=develop VARIANT=slim-buster DATABASE=postgres
+    - env: VERSION=develop VARIANT=slim-buster DATABASE=mariadb
+
+env: # Environments
+  - VERSION=develop VARIANT=slim-buster DATABASE=postgres
+  - VERSION=develop VARIANT=slim-buster DATABASE=mariadb
+  - VERSION=develop VARIANT=alpine3.12 DATABASE=postgres
+  - VERSION=develop VARIANT=alpine3.12 DATABASE=mariadb
+  - VERSION=v1.3 VARIANT=slim-buster DATABASE=postgres
+  - VERSION=v1.3 VARIANT=slim-buster DATABASE=mariadb
+  - VERSION=v1.3 VARIANT=alpine3.12 DATABASE=postgres
+  - VERSION=v1.3 VARIANT=alpine3.12 DATABASE=mariadb
+  - VERSION=v1.4 VARIANT=slim-buster DATABASE=postgres
+  - VERSION=v1.4 VARIANT=slim-buster DATABASE=mariadb
+  - VERSION=v1.4 VARIANT=alpine3.12 DATABASE=postgres
+  - VERSION=v1.4 VARIANT=alpine3.12 DATABASE=mariadb
