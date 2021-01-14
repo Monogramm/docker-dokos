@@ -30,8 +30,6 @@ COPY bin/install_app.sh /usr/local/bin/install_dokos_app
 RUN set -ex; \
     install_dokos_app erpnext https://gitlab.com/dokos/dokos ${DOKOS_BRANCH}
 
-VOLUME /home/dodock/dodock-bench/apps/erpnext/erpnext/public
-
 ARG TAG
 ARG VCS_REF
 ARG BUILD_DATE
