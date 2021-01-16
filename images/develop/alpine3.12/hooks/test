@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# See documentation for details:
+# https://docs.docker.com/docker-hub/builds/advanced/
+
+for file in docker-compose*.test.yml; do
+
+    echo "Starting Test in ${file}..."
+
+    # Test container run
+    docker-compose --no-ansi -f "${file}" up -d && sleep 60
+    docker-compose --no-ansi -f "${file}" logs -f "sut"
+    docker-compose --no-ansi -f "${file}" ps
+    docker-compose --no-ansi -f "${file}" logs "dokos_db"
+    docker-compose --no-ansi -f "${file}" ps "dokos_db" | grep "Up"
+    docker-compose --no-ansi -f "${file}" logs "dokos_app"
+    docker-compose --no-ansi -f "${file}" ps "dokos_app" | grep "Up"
+    docker-compose --no-ansi -f "${file}" logs "dokos_web"
+    docker-compose --no-ansi -f "${file}" ps "dokos_web" | grep "Up"
+    #docker-compose --no-ansi -f "${file}" ps "sut" | grep "Exit 0" || exit 1
+    docker-compose --no-ansi -f "${file}" down
+    # Test container restart
+    docker-compose --no-ansi -f "${file}" up -d && sleep 60
+    docker-compose --no-ansi -f "${file}" logs -f "sut"
+    docker-compose --no-ansi -f "${file}" ps
+    docker-compose --no-ansi -f "${file}" logs "dokos_db"
+    docker-compose --no-ansi -f "${file}" ps "dokos_db" | grep "Up"
+    docker-compose --no-ansi -f "${file}" logs "dokos_app"
+    docker-compose --no-ansi -f "${file}" ps "dokos_app" | grep "Up"
+    docker-compose --no-ansi -f "${file}" logs "dokos_web"
+    docker-compose --no-ansi -f "${file}" ps "dokos_web" | grep "Up"
+    #docker-compose --no-ansi -f "${file}" ps "sut" | grep "Exit 0" || exit 1
+    docker-compose --no-ansi -f "${file}" down
+
+done

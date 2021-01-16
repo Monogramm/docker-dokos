@@ -1,0 +1,281 @@
+version: "2.3"
+
+services:
+  # https://docs.docker.com/docker-hub/builds/automated-testing/
+  sut:
+    build:
+      context: ./test
+      dockerfile: Dockerfile
+    command: sh /docker_test.sh
+    # Only for travis-ci, do not name test container in dockerhub
+    container_name: sut
+    depends_on:
+      - dokos_db
+      - dokos_app
+      - dokos_web
+      - dokos_scheduler
+      - dokos_worker_default
+      - dokos_worker_long
+      - dokos_worker_short
+      - dokos_socketio
+      - dokos_redis_cache
+      - dokos_redis_queue
+      - dokos_redis_socketio
+    environment:
+      # Container setup
+      - WORKER_TYPE=sut
+      # Docker setup
+      - DOCKER_APPS_TIMEOUT=900
+      - DOCKER_DEBUG=1
+      # Test setup
+      - TEST_VERSION=${VERSION}
+      - TRAVIS_BUILD_ID=${TRAVIS_BUILD_ID}
+      - TRAVIS_BUILD_NUMBER=${TRAVIS_BUILD_NUMBER}
+      - TRAVIS_BUILD_WEB_URL=${TRAVIS_BUILD_WEB_URL}
+      - TRAVIS_COMMIT=${TRAVIS_COMMIT}
+      - TRAVIS_COMMIT_MESSAGE=${TRAVIS_COMMIT_MESSAGE}
+      - TRAVIS_COMMIT_RANGE=${TRAVIS_COMMIT_RANGE}
+      - TRAVIS_JOB_ID=${TRAVIS_JOB_ID}
+      - TRAVIS_JOB_NAME=${TRAVIS_JOB_NAME}
+      - TRAVIS_JOB_NUMBER=${TRAVIS_JOB_NUMBER}
+      - TRAVIS_JOB_WEB_URL=${TRAVIS_JOB_WEB_URL}
+      - TRAVIS_BRANCH=${TRAVIS_BRANCH}
+      # Dodock setup
+      - DODOCK_DEFAULT_SITE=${DOKOS_SITE}
+    volumes:
+      - /srv/dokos/dodock/sites:/home/dodock/dodock-bench/sites
+      - /srv/dokos/dodock/logs:/home/dodock/dodock-bench/logs
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
+  dokos_app:
+    # For development or CI, build from local Dockerfile
+    # For production, download prebuilt image
+    build:
+      context: .
+    image: ${IMAGE_NAME}
+    container_name: dokos_app
+    restart: on-failure
+    command: app
+    ports:
+      - 8000:8000
+    depends_on:
+      dokos_db:
+        condition: service_healthy
+      dokos_redis_cache:
+        condition: service_started
+      dokos_redis_queue:
+        condition: service_started
+      dokos_redis_socketio:
+        condition: service_started
+    links:
+      - dokos_db
+    environment:
+      # Docker setup
+      #- DOCKER_DB_ALLOWED_HOSTS=172.%.%.%
+      - DOCKER_DB_ALLOWED_HOSTS=
+      # Dodock setup
+      - DODOCK_APP_INIT=erpnext
+      - DODOCK_APP_RESET=1
+      - DODOCK_DEFAULT_PROTOCOL=http
+      - DODOCK_DEFAULT_SITE=${DOKOS_SITE}
+      - DODOCK_HTTP_PORT=80
+      - DODOCK_WEBSERVER_PORT=80
+      - DODOCK_SOCKETIO_PORT=3000
+      - DODOCK_BUILD_OPTIONS=
+      - DODOCK_LOGGING=1
+      - DEVELOPER_MODE=0
+      - ALLOW_TESTS=1
+      #- ADMIN_USER=Administrator
+      - ADMIN_PASSWORD=${DOKOS_ADMIN_PWD}
+      - ENCRYPTION_KEY=${DOKOS_ENCRYPTION_KEY}
+      # Database setup
+      - DB_TYPE=mariadb
+      - DB_HOST=dokos_db
+      - DB_PORT=3306
+      - DB_NAME=${DOKOS_DB_NAME}
+      - DB_PASSWORD=${DOKOS_DB_PWD}
+      - DB_ROOT_USER=${DOKOS_DB_ROOT_USER}
+      - DB_ROOT_PASSWORD=${DOKOS_DB_ROOT_PWD}
+      # Mail setup
+      - MAIL_MUTED=false
+      - MAIL_HOST=${DOKOS_MAIL_HOST}
+      - MAIL_PORT=587
+      - MAIL_USE_SSL=tls
+      - MAIL_LOGIN=${DOKOS_SMTP_USER}
+      - MAIL_PASSWORD=${DOKOS_SMTP_PWD}
+      - MAIL_EMAIL_ID=dokos@${DOKOS_MAIL_HOST}
+      - MAIL_SENDER_NAME=Dokos
+      # Redis setup
+      - REDIS_CACHE_HOST=dokos_redis_cache
+      - REDIS_QUEUE_HOST=dokos_redis_queue
+      - REDIS_SOCKETIO_HOST=dokos_redis_socketio
+    volumes:
+      - /srv/dokos/dodock/sites:/home/dodock/dodock-bench/sites
+      - /srv/dokos/dodock/logs:/home/dodock/dodock-bench/logs
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
+  dokos_web:
+    image: nginx:alpine
+    container_name: dokos_web
+    restart: on-failure
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - /srv/dokos/dodock/sites:/var/www/html
+      # If you need SSL connection, you can provide your own certificates
+      # - ./certs:/etc/letsencrypt
+      # - ./certs-data:/data/letsencrypt
+    depends_on:
+      - dokos_socketio
+    ports:
+      - 8080:80
+      # If you need SSL connection
+      # - 8443:443
+    links:
+      - dokos_app
+      - dokos_socketio
+
+  dokos_db:
+    image: mariadb:10
+    container_name: dokos_db
+    restart: on-failure
+    command: --defaults-extra-file=/etc/dodockdb.cnf
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "--user=${DOKOS_DB_NAME}", "--password=${DOKOS_DB_PWD}"]
+      timeout: 10s
+      retries: 5
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DOKOS_DB_ROOT_PWD}
+      # Following parameters are not needed with Frappe 12 or higher since it will create DB itself
+      - MYSQL_DATABASE=${DOKOS_DB_NAME}
+      - MYSQL_USER=${DOKOS_DB_NAME}
+      - MYSQL_PASSWORD=${DOKOS_DB_PWD}
+    volumes:
+      - ./mariadb.conf:/etc/dodockdb.cnf:ro
+      - /srv/dokos/db:/var/lib/mysql
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
+  dokos_mailer:
+    image: sj26/mailcatcher:latest
+    hostname: dokos_mailer
+    container_name: dokos_mailer
+    restart: always
+    expose:
+      - 1025
+    ports:
+      - 1080:1080
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
+  dokos_scheduler:
+    image: ${IMAGE_NAME}
+    container_name: dokos_scheduler
+    restart: on-failure
+    command: scheduler
+    depends_on:
+      - dokos_redis_queue
+      - dokos_redis_cache
+    environment:
+      # Docker setup
+      - DOCKER_APPS_TIMEOUT=900
+    volumes:
+      - /srv/dokos/dodock/sites:/home/dodock/dodock-bench/sites
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
+  dokos_worker_default:
+    image: ${IMAGE_NAME}
+    container_name: dokos_worker_default
+    restart: on-failure
+    command: worker-default
+    depends_on:
+      - dokos_redis_queue
+      - dokos_redis_cache
+    environment:
+      - WORKER_TYPE=default
+      # Docker setup
+      - DOCKER_APPS_TIMEOUT=900
+    volumes:
+      - /srv/dokos/dodock/sites:/home/dodock/dodock-bench/sites
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
+  dokos_worker_short:
+    image: ${IMAGE_NAME}
+    container_name: dokos_worker_short
+    restart: on-failure
+    command: worker-short
+    depends_on:
+      - dokos_redis_queue
+      - dokos_redis_cache
+    environment:
+      - WORKER_TYPE=short
+      # Docker setup
+      - DOCKER_APPS_TIMEOUT=900
+    volumes:
+      - /srv/dokos/dodock/sites:/home/dodock/dodock-bench/sites
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
+  dokos_worker_long:
+    image: ${IMAGE_NAME}
+    container_name: dokos_worker_long
+    restart: on-failure
+    command: worker-long
+    depends_on:
+      - dokos_redis_queue
+      - dokos_redis_cache
+    environment:
+      - WORKER_TYPE=long
+      # Docker setup
+      - DOCKER_APPS_TIMEOUT=900
+    volumes:
+      - /srv/dokos/dodock/sites:/home/dodock/dodock-bench/sites
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
+  dokos_socketio:
+    image: ${IMAGE_NAME}
+    container_name: dokos_socketio
+    command: node-socketio
+    restart: on-failure
+    ports:
+      - 3000:3000
+    depends_on:
+      - dokos_redis_socketio
+    environment:
+      # Docker setup
+      - DOCKER_APPS_TIMEOUT=900
+    volumes:
+      - /srv/dokos/dodock/sites:/home/dodock/dodock-bench/sites
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
+  dokos_redis_cache:
+    image: redis:alpine
+    container_name: dokos_redis_cache
+    command: ["redis-server","/etc/conf.d/redis.conf"]
+    restart: on-failure
+    volumes:
+      - ./redis_cache.conf:/etc/conf.d/redis.conf:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
+  dokos_redis_queue:
+    image: redis:alpine
+    container_name: dokos_redis_queue
+    restart: on-failure
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
+  dokos_redis_socketio:
+    image: redis:alpine
+    container_name: dokos_redis_socketio
+    restart: on-failure
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
