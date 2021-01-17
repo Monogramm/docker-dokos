@@ -16,21 +16,21 @@ if [ ! -f "./sites/apps.txt" ] || [ ! -f "./sites/.docker-app-init" ] || [ ! -f 
 fi
 
 echo "Checking main containers are reachable..."
-if ! sudo ping -c 10 -q dokos_db ; then
+if ! ping -c 10 -q dokos_db ; then
     echo 'Database container is not responding!'
     echo 'Check the following logs for details:'
     tail -n 100 logs/*.log
     exit 2
 fi
 
-if ! sudo ping -c 10 -q dokos_app ; then
+if ! ping -c 10 -q dokos_app ; then
     echo 'App container is not responding!'
     echo 'Check the following logs for details:'
     tail -n 100 logs/*.log
     exit 4
 fi
 
-if ! sudo ping -c 10 -q dokos_web ; then
+if ! ping -c 10 -q dokos_web ; then
     echo 'Web container is not responding!'
     echo 'Check the following logs for details:'
     tail -n 100 logs/*.log
@@ -183,6 +183,6 @@ bench run-ui-tests --help
 
 ################################################################################
 # Success
-echo 'dodock app '${DODOCK_APP_TO_TEST}' tests finished'
+echo "Dodock app '${DODOCK_APP_TO_TEST}' tests finished"
 echo 'Check the CI reports and logs for details.'
 exit 0

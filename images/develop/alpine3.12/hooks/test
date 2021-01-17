@@ -7,6 +7,8 @@ for file in docker-compose*.test.yml; do
 
     echo "Starting Test in ${file}..."
 
+    # Build test container
+    docker-compose --no-ansi -f "${file}" build sut
     # Test container run
     docker-compose --no-ansi -f "${file}" up -d && sleep 60
     docker-compose --no-ansi -f "${file}" logs -f "sut"
@@ -17,7 +19,7 @@ for file in docker-compose*.test.yml; do
     docker-compose --no-ansi -f "${file}" ps "dokos_app" | grep "Up"
     docker-compose --no-ansi -f "${file}" logs "dokos_web"
     docker-compose --no-ansi -f "${file}" ps "dokos_web" | grep "Up"
-    #docker-compose --no-ansi -f "${file}" ps "sut" | grep "Exit 0" || exit 1
+    docker-compose --no-ansi -f "${file}" ps "sut" | grep "Exit 0" || exit 1
     docker-compose --no-ansi -f "${file}" down
     # Test container restart
     docker-compose --no-ansi -f "${file}" up -d && sleep 60
@@ -29,7 +31,7 @@ for file in docker-compose*.test.yml; do
     docker-compose --no-ansi -f "${file}" ps "dokos_app" | grep "Up"
     docker-compose --no-ansi -f "${file}" logs "dokos_web"
     docker-compose --no-ansi -f "${file}" ps "dokos_web" | grep "Up"
-    #docker-compose --no-ansi -f "${file}" ps "sut" | grep "Exit 0" || exit 1
-    docker-compose --no-ansi -f "${file}" down
+    docker-compose --no-ansi -f "${file}" ps "sut" | grep "Exit 0" || exit 1
+    docker-compose --no-ansi -f "${file}" down --volumes
 
 done

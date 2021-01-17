@@ -1,5 +1,9 @@
 version: "2.3"
 
+volumes:
+  dokos_sites:
+  dokos_logs:
+
 services:
   # https://docs.docker.com/docker-hub/builds/automated-testing/
   sut:
@@ -30,8 +34,8 @@ services:
       # Dodock setup
       - DODOCK_DEFAULT_SITE=${DOKOS_SITE}
     volumes:
-      - /srv/dokos/dodock/sites:/home/dodock/dodock-bench/sites
-      - /srv/dokos/dodock/logs:/home/dodock/dodock-bench/logs
+      - dokos_sites:/home/dodock/dodock-bench/sites
+      - dokos_logs:/home/dodock/dodock-bench/logs
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
 
@@ -59,7 +63,7 @@ services:
       - dokos_db
     environment:
       # Docker setup
-      #- DOCKER_DB_ALLOWED_HOSTS=172.%.%.%
+      #- DOCKER_DB_ALLOWED_HOSTS=%.%.%.%
       - DOCKER_DB_ALLOWED_HOSTS=
       - DOCKER_GUNICORN_TIMEOUT=600
       # Dodock setup
@@ -99,8 +103,8 @@ services:
       - REDIS_QUEUE_HOST=dokos_redis_queue
       - REDIS_SOCKETIO_HOST=dokos_redis_socketio
     volumes:
-      - /srv/dokos/dodock/sites:/home/dodock/dodock-bench/sites
-      - /srv/dokos/dodock/logs:/home/dodock/dodock-bench/logs
+      - dokos_sites:/home/dodock/dodock-bench/sites
+      - dokos_logs:/home/dodock/dodock-bench/logs
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
 
@@ -110,7 +114,7 @@ services:
     restart: on-failure
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
-      - /srv/dokos/dodock/sites:/var/www/html
+      - dokos_sites:/var/www/html
       # If you need SSL connection, you can provide your own certificates
       # - ./certs:/etc/letsencrypt
       # - ./certs-data:/data/letsencrypt
@@ -170,7 +174,7 @@ services:
       # Docker setup
       - DOCKER_APPS_TIMEOUT=900
     volumes:
-      - /srv/dokos/dodock/sites:/home/dodock/dodock-bench/sites
+      - dokos_sites:/home/dodock/dodock-bench/sites
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
 
@@ -187,7 +191,7 @@ services:
       # Docker setup
       - DOCKER_APPS_TIMEOUT=900
     volumes:
-      - /srv/dokos/dodock/sites:/home/dodock/dodock-bench/sites
+      - dokos_sites:/home/dodock/dodock-bench/sites
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
 
@@ -204,7 +208,7 @@ services:
       # Docker setup
       - DOCKER_APPS_TIMEOUT=900
     volumes:
-      - /srv/dokos/dodock/sites:/home/dodock/dodock-bench/sites
+      - dokos_sites:/home/dodock/dodock-bench/sites
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
 
@@ -221,7 +225,7 @@ services:
       # Docker setup
       - DOCKER_APPS_TIMEOUT=900
     volumes:
-      - /srv/dokos/dodock/sites:/home/dodock/dodock-bench/sites
+      - dokos_sites:/home/dodock/dodock-bench/sites
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
 
@@ -238,7 +242,7 @@ services:
       # Docker setup
       - DOCKER_APPS_TIMEOUT=900
     volumes:
-      - /srv/dokos/dodock/sites:/home/dodock/dodock-bench/sites
+      - dokos_sites:/home/dodock/dodock-bench/sites
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
 
