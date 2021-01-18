@@ -40,11 +40,12 @@ fi
 echo "Checking bench environment..."
 bench doctor
 
-echo "Checking apps installed..."
+echo "Retrieving apps installed..."
 bench list-apps
 BENCH_LIST_APPS=$(bench list-apps)
 
-for app in dokos; do
+echo "Checking apps installed..."
+for app in erpnext; do
     if ! echo "$BENCH_LIST_APPS" | grep "$app"; then
         echo "$app is not installed!"
         exit 16
@@ -63,11 +64,19 @@ echo 'Docker tests successful'
 # https://frappe.io/docs/user/en/testing
 ################################################################################
 
-# TODO Enable tests again
-#DODOCK_APP_TO_TEST=dokos
+#DODOCK_APP_TO_TEST=erpnext
+
+echo "Preparing Frappe application '${DODOCK_APP_TO_TEST}' tests..."
+
+bench set-config allow_tests true -g
+
+echo "Checking environment for '${DODOCK_APP_TO_TEST}' tests..."
+bench doctor
+bench enable-scheduler
+bench doctor
 
 ################################################################################
-# TODO dodock Unit tests
+# TODO Dodock Unit tests
 # https://frappe.io/docs/user/en/guides/automated-testing/unit-testing
 
 DODOCK_APP_UNIT_TEST_REPORT="$(pwd)/sites/.${DODOCK_APP_TO_TEST}_unit_tests.xml"
@@ -77,7 +86,7 @@ DODOCK_APP_UNIT_TEST_PROFILE="$(pwd)/sites/.${DODOCK_APP_TO_TEST}_unit_tests.pro
 
 if [ -n "${DODOCK_APP_TO_TEST}" ]; then
 
-    echo "Preparing dodock application '${DODOCK_APP_TO_TEST}' tests..."
+    echo "Preparing Dodock application '${DODOCK_APP_TO_TEST}' tests..."
 
     bench set-config allow_tests true -g
 
@@ -103,7 +112,7 @@ fi
 
 ## Check result of tests
 if [ -f "${DODOCK_APP_UNIT_TEST_REPORT}" ]; then
-    echo "Checking dodock application '${DODOCK_APP_TO_TEST}' unit tests report..."
+    echo "Checking Dodock application '${DODOCK_APP_TO_TEST}' unit tests report..."
 
     if grep -E '(errors|failures)="[1-9][0-9]*"' "${DODOCK_APP_UNIT_TEST_REPORT}"; then
         echo "Unit Tests of '${DODOCK_APP_TO_TEST}' app failed! See report for details:"
@@ -117,7 +126,6 @@ if [ -f "${DODOCK_APP_UNIT_TEST_REPORT}" ]; then
 fi
 
 if [ -f ./sites/.coverage ]; then
-    echo "Sending Unit Tests coverage of '${DODOCK_APP_TO_TEST}' app to Coveralls..."
     set +e
     cp ./sites/.coverage ./.coverage
 
@@ -137,7 +145,7 @@ if [ -f ./sites/.coverage ]; then
 fi
 
 if [ -f "${DODOCK_APP_UNIT_TEST_PROFILE}" ]; then
-    echo "Checking dodock application '${DODOCK_APP_TO_TEST}' unit tests profile..."
+    echo "Checking Dodock application '${DODOCK_APP_TO_TEST}' unit tests profile..."
 
     # XXX Are there any online services that could receive and display profiles?
     #cat "${DODOCK_APP_UNIT_TEST_PROFILE}"
@@ -175,7 +183,7 @@ bench run-ui-tests --help
 #        ${DODOCK_APP_TO_TEST}
 #    set -e
 #else
-#    echo "Building docs is not available for this version of dodock (${TEST_VERSION})"
+#    echo "Building docs is not available for this version of Dodock (${TEST_VERSION})"
 #fi
 
 ## TODO Check docs generated properly
