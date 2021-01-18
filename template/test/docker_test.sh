@@ -66,7 +66,7 @@ echo 'Docker tests successful'
 
 #DODOCK_APP_TO_TEST=erpnext
 
-echo "Preparing Frappe application '${DODOCK_APP_TO_TEST}' tests..."
+echo "Preparing Dodock application '${DODOCK_APP_TO_TEST}' tests..."
 
 bench set-config allow_tests true -g
 
