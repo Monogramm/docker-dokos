@@ -21,7 +21,7 @@ ARG VERSION=%%VERSION%%
 
 # Build environment variables
 ENV DOKOS_BRANCH=${VERSION} \
-    DODOCK_APP_PROTECTED='frappe erpnext' \
+    DODOCK_APP_PROTECTED='frappe,erpnext' \
     DOCKER_GUNICORN_TIMEOUT=600
 
 COPY bin/install_app.sh /usr/local/bin/install_dokos_app
