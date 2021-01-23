@@ -45,7 +45,7 @@ bench list-apps
 BENCH_LIST_APPS=$(bench list-apps)
 
 echo "Checking apps installed..."
-for app in erpnext; do
+for app in frappe erpnext; do
     if ! echo "$BENCH_LIST_APPS" | grep "$app"; then
         echo "$app is not installed!"
         exit 16
@@ -66,7 +66,7 @@ echo 'Docker tests successful'
 
 #DODOCK_APP_TO_TEST=erpnext
 
-echo "Preparing Frappe application '${DODOCK_APP_TO_TEST}' tests..."
+echo "Preparing Dodock application '${DODOCK_APP_TO_TEST}' tests..."
 
 bench set-config allow_tests true -g
 
