@@ -33,8 +33,10 @@ Open Source ERP built for the web. Fork of ERPNext.
 <https://hub.docker.com/r/monogramm/docker-dokos/>
 
 -   Dokos 1.4
-    -   `1.4-alpine`
-    -   `1.4-debian-slim`
+    -   `v1.4`
+
+-   Dokos 1.3
+    -   `v1.3`
 
 ## How to run this image ?
 
