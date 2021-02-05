@@ -32,11 +32,16 @@ Open Source ERP built for the web. Fork of ERPNext.
 
 <https://hub.docker.com/r/monogramm/docker-dokos/>
 
--   Dokos 1.4
-    -   `v1.4`
+<!-- >Docker Tags -->
 
--   Dokos 1.3
-    -   `v1.3`
+-   v1.4.11-alpine3.12 v1.4-alpine3.12 alpine3.12  (`images/v1.4/alpine3.12/Dockerfile`)
+-   v1.4.11-slim-buster v1.4-slim-buster slim-buster v1.4.11 v1.4 latest  (`images/v1.4/slim-buster/Dockerfile`)
+-   v1.3.15-alpine3.12 v1.3-alpine3.12  (`images/v1.3/alpine3.12/Dockerfile`)
+-   v1.3.15-slim-buster v1.3-slim-buster v1.3.15 v1.3  (`images/v1.3/slim-buster/Dockerfile`)
+-   develop-alpine3.12  (`images/develop/alpine3.12/Dockerfile`)
+-   develop-slim-buster develop  (`images/develop/slim-buster/Dockerfile`)
+
+<!-- <Docker Tags -->
 
 ## How to run this image ?
 

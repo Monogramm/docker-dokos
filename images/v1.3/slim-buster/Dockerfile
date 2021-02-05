@@ -29,7 +29,7 @@ COPY bin/install_app.sh /usr/local/bin/install_dokos_app
 # Setup Dokos
 RUN set -ex; \
     tar zxf sites-base.tgz; \
-    install_dokos_app erpnext https://gitlab.com/dokos/dokos ${DOKOS_BRANCH}; \
+    install_dokos_app erpnext https://gitlab.com/dokos/dokos "${DOKOS_BRANCH}"; \
     tar zcf sites-base.tgz sites; \
     rm -rf sites/* ~/.cache
 
