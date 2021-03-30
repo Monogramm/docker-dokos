@@ -15,11 +15,22 @@ git clone --depth 1 ${BRANCH} "${APP_REPO}" "${APP_NAME}"
 sed -i -e '/frappe/d' "${APP_NAME}/requirements.txt"
 pip3 install --no-cache-dir -e "/home/dodock/dodock-bench/apps/${APP_NAME}"
 
-cd "${APP_NAME}" || exit
+# Use exactly same setup as dokidocker
+echo "Install dodock NodeJS dependencies . . ."
+cd /home/dodock/dodock-bench/apps/frappe
 yarn
-rm -rf node_modules
+echo "Install ${APP_NAME} NodeJS dependencies . . ."
+cd /home/dodock/dodock-bench/apps/${APP_NAME}
+yarn
+echo "Build browser assets . . ."
+cd /home/dodock/dodock-bench/apps/frappe
+yarn production --app ${APP_NAME}  # Note: this is invalid call !
+echo "Install dodock NodeJS production dependencies . . ."
+cd /home/dodock/dodock-bench/apps/frappe
 yarn install --production=true
-yarn add node-sass
+echo "Install ${APP_NAME} NodeJS production dependencies . . ."
+cd /home/dodock/dodock-bench/apps/${APP_NAME}
+yarn install --production=true
 
 cd /home/dodock/dodock-bench/ || exit
 if [ -d "apps/${APP_NAME}/${APP_NAME}/public" ]; then
