@@ -6,7 +6,7 @@ set -e
 # Testing docker containers
 
 echo "Waiting to ensure everything is fully ready for the tests..."
-sleep 60
+sleep 360
 
 echo "Checking content of sites directory..."
 if [ ! -f "./sites/apps.txt" ] || [ ! -f "./sites/.docker-app-init" ] || [ ! -f "./sites/currentsite.txt" ] || [ ! -f "./sites/.docker-site-init" ] || [ ! -f "./sites/.docker-init" ]; then
