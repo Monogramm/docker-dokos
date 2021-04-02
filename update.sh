@@ -11,14 +11,14 @@ variants=(
   slim-buster
 )
 
-min_version='1.3'
-dockerLatest='1.4'
+min_version='1.4'
+dockerLatest='develop'
 dockerDefaultVariant='slim-buster'
 
 
 # version_greater_or_equal A B returns whether A >= B
 function version_greater_or_equal() {
-	[[ "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1" || "$1" == "$2" ]];
+  [[ "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1" || "$1" == "$2" ]];
 }
 
 dockerRepo="monogramm/docker-dokos"
@@ -40,8 +40,8 @@ travisEnv=
 for latest in "${latests[@]}"; do
   version=$(echo "$latest" | cut -d. -f1-2)
 
-	# Only add versions >= "$min_version"
-	if version_greater_or_equal "$version" "$min_version"; then
+  # Only add versions >= "$min_version"
+  if version_greater_or_equal "$version" "v$min_version" || [ "$latest" == 'develop' ]; then
 
     for variant in "${variants[@]}"; do
       # Create the version+variant directory with a Dockerfile.
@@ -85,25 +85,25 @@ for latest in "${latests[@]}"; do
       ' "$dir/hooks/run"
 
       # Create a list of "alias" tags for DockerHub post_push
-			if [ "$version" = "v$dockerLatest" ]; then
-				if [ "$variant" = "$dockerDefaultVariant" ]; then
-					export DOCKER_TAGS="$latest-$variant $version-$variant $variant $latest $version latest "
-				else
-					export DOCKER_TAGS="$latest-$variant $version-$variant $variant "
-				fi
-			elif [ "$version" = "$latest" ]; then
-				if [ "$variant" = "$dockerDefaultVariant" ]; then
-					export DOCKER_TAGS="$latest-$variant $latest "
-				else
-					export DOCKER_TAGS="$latest-$variant "
-				fi
-			else
-				if [ "$variant" = "$dockerDefaultVariant" ]; then
-					export DOCKER_TAGS="$latest-$variant $version-$variant $latest $version "
-				else
-					export DOCKER_TAGS="$latest-$variant $version-$variant "
-				fi
-			fi
+      if [ "$version" = "v$dockerLatest" ]; then
+        if [ "$variant" = "$dockerDefaultVariant" ]; then
+          export DOCKER_TAGS="$latest-$variant $version-$variant $variant $latest $version latest "
+        else
+          export DOCKER_TAGS="$latest-$variant $version-$variant $variant "
+        fi
+      elif [ "$version" = "$latest" ]; then
+        if [ "$variant" = "$dockerDefaultVariant" ]; then
+          export DOCKER_TAGS="$latest-$variant $latest "
+        else
+          export DOCKER_TAGS="$latest-$variant "
+        fi
+      else
+        if [ "$variant" = "$dockerDefaultVariant" ]; then
+          export DOCKER_TAGS="$latest-$variant $version-$variant $latest $version "
+        else
+          export DOCKER_TAGS="$latest-$variant $version-$variant "
+        fi
+      fi
       echo "${DOCKER_TAGS} " > "$dir/.dockertags"
 
       # Add README tags
@@ -119,6 +119,7 @@ for latest in "${latests[@]}"; do
         docker build -t "${dockerRepo}:${tag}" "$dir"
       fi
     done
+
   fi
 
 done
