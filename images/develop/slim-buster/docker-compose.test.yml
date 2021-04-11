@@ -28,6 +28,7 @@ services:
       - WORKER_TYPE=sut
       # Docker setup
       - DOCKER_APPS_TIMEOUT=900
+      - DOCKER_INIT_TIMEOUT=720
       - DOCKER_DEBUG=1
       # Test setup
       - TEST_VERSION=develop

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -xe
 
 APP_NAME=${1}
 APP_REPO=${2}

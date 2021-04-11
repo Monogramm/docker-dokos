@@ -28,6 +28,7 @@ services:
       - WORKER_TYPE=sut
       # Docker setup
       - DOCKER_APPS_TIMEOUT=900
+      - DOCKER_INIT_TIMEOUT=720
       - DOCKER_DEBUG=1
       # Test setup
       - TEST_VERSION=%%DOKOS_VERSION%%
@@ -49,7 +50,7 @@ services:
     restart: on-failure
     command: app
     ports:
-      - 8000:8000
+      - "8000:8000"
     depends_on:
       dokos_db:
         condition: service_healthy
@@ -121,9 +122,9 @@ services:
     depends_on:
       - dokos_socketio
     ports:
-      - 8080:80
+      - "8080:80"
       # If you need SSL connection
-      # - 8443:443
+      # - "8443:443"
     links:
       - dokos_app
       - dokos_socketio
@@ -155,9 +156,9 @@ services:
     container_name: dokos_mailer
     restart: always
     expose:
-      - 1025
+      - '1025'
     ports:
-      - 1080:1080
+      - "1080:1080"
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
@@ -235,7 +236,7 @@ services:
     command: node-socketio
     restart: on-failure
     ports:
-      - 3000:3000
+      - "3000:3000"
     depends_on:
       - dokos_redis_socketio
     environment:
