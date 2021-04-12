@@ -19,6 +19,10 @@ The concept is the following:
 -   the application container sets all the environment variables, the other containers wait for setup to be done
 -   attempt to provide postgresql compatibility
 
+Check base image [Monogramm/docker-dodock](https://github.com/Monogramm/docker-dodock) for details.
+
+Check image [Monogramm/docker-dokos-ext](https://github.com/Monogramm/docker-dokos-ext) to see how to expand this image and add custom frappe apps.
+
 ## What is Dokos ?
 
 Open Source ERP built for the web. Fork of ERPNext.
